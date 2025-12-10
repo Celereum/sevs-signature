@@ -1,0 +1,149 @@
+[package]
+name = "celereum"
+version = "0.1.0"
+edition = "2021"
+description = "Celereum - Swift Beyond Measure - High-performance blockchain"
+authors = ["Celereum Team"]
+license = "MIT"
+
+[dependencies]
+# Cryptography - SEVS Post-Quantum Signatures (128-bit quantum security)
+sha2 = "0.10"
+sha3 = "0.10"
+# No more Ed25519 - fully migrated to SEVS for post-quantum security
+rand = "0.8"
+bs58 = "0.5"
+hex = "0.4"
+
+# BLS12-381 Signature Aggregation (Pure Rust - no C compiler needed)
+# Using bls12_381_plus for Pure Rust BLS implementation
+# Falls back to software implementation on systems without C compiler
+bls12_381_plus = "0.8"
+group = "0.13"
+ff = "0.13"
+
+# For secure random number generation in BLS
+getrandom = { version = "0.2", features = ["std"] }
+
+# Zeroize for secure memory clearing
+zeroize = { version = "1.7", features = ["derive"] }
+
+# Constant-time operations for cryptographic security
+subtle = "2.5"
+
+# Lazy static initialization for NTT twiddle table pre-computation
+lazy_static = "1.4"
+
+# Password-based key derivation (Argon2)
+argon2 = "0.5"
+
+# Authenticated encryption (AES-GCM)
+aes-gcm = "0.10"
+
+# VRF - Implemented using SEVS (post-quantum)
+# No external dependency needed
+
+# Post-Quantum Cryptography
+# Using SEVS (Seed-Expanded Verkle Signatures) - 128-bit PQ security
+# See src/crypto/sevs.rs for implementation
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+bincode = "1.3"
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# CLI
+clap = { version = "4.4", features = ["derive"] }
+
+# RPC Server (HTTP + WebSocket)
+jsonrpsee = { version = "0.21", features = ["server", "macros"] }
+tower = "0.4"
+tower-http = { version = "0.4", features = ["cors"] }
+http = "0.2"
+hyper = { version = "0.14", features = ["full"] }
+tokio-tungstenite = "0.21"
+futures-util = "0.3"
+
+# HTTP Client for Indexer
+reqwest = { version = "0.11", features = ["json"] }
+
+# Storage (using sled instead of rocksdb - pure Rust, no C++ needed)
+sled = "0.34"
+
+# Networking - High-performance P2P
+dashmap = "5.5"
+parking_lot = "0.12"
+uuid = { version = "1.6", features = ["v4"] }  # Without fast-rng to avoid getrandom 0.3
+
+# Parallel execution
+rayon = "1.10"
+num_cpus = "1.16"
+
+# LRU Cache for hot accounts
+lru = "0.12"
+
+# Lock-free concurrency
+crossbeam-channel = "0.5"
+
+# Compression for state - using only LZ4 (pure Rust, no native deps)
+lz4_flex = "0.11"  # Fast compression, pure Rust
+
+# QUIC Transport (UDP-based, 0-RTT, multiplexed streams)
+# Note: On Windows, requires MSVC toolchain or mingw64
+# For cross-platform compatibility, use with feature flag
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+quinn = "0.11"
+rcgen = "0.13"
+rustls = { version = "0.23", default-features = false, features = ["std", "ring"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# QUIC disabled on Windows due to dlltool requirement
+# Use TCP transport instead
+
+# GPU Acceleration Support
+[build]
+build = "build.rs"  # Enable GPU CUDA compilation if available
+
+# Optional GPU acceleration crate (for CUDA support)
+[target.'cfg(all(target_os = "windows", target_arch = "x86_64"))'.dependencies]
+# cudarc = "0.9"  # CUDA Runtime API wrapper - optional
+# cust = "0.2"    # High-level CUDA wrapper - optional
+
+[features]
+default = []
+gpu = []          # GPU acceleration enabled (CUDA)
+gpu-cuda = []     # Explicit CUDA backend
+benchmark = []    # Enable detailed benchmarking
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bin]]
+name = "celereum-node"
+path = "src/main.rs"
+
+[[bin]]
+name = "attack-test"
+path = "src/bin/attack_test.rs"
+
+[[bin]]
+name = "ntt_detailed_debug"
+path = "src/bin/ntt_detailed_debug.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
